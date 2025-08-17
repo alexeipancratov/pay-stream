@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAccount, usePublicClient } from "wagmi";
 import { formatUnits } from "viem";
 
-const PAYMENT_ROUTER_ADDRESS = "0x58b35972F7C5c81cbd174cFf6839986F82D0f9f9"; // Sepolia address
+const PAYMENT_ROUTER_ADDRESS = "0xBEdA19E852341961789eF4d684098f80f155dCc7"; // Sepolia address
 
 interface PaymentReceivedEvent {
   invoiceId: string;

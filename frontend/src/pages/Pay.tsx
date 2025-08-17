@@ -32,6 +32,7 @@ const paymentRouterAbi = [
       { internalType: "address", name: "merchant", type: "address" },
       { internalType: "uint256", name: "amount", type: "uint256" },
       { internalType: "bytes32", name: "invoiceId", type: "bytes32" },
+      { internalType: "uint256", name: "expiresAt", type: "uint256" },
     ],
     name: "pay",
     outputs: [],
@@ -52,7 +53,7 @@ interface Invoice {
   expiresAt: number;
 }
 
-const PaymentRouterAddress = "0x58b35972F7C5c81cbd174cFf6839986F82D0f9f9";
+const PaymentRouterAddress = "0xBEdA19E852341961789eF4d684098f80f155dCc7";
 
 const Pay: React.FC = () => {
   const { isConnected, chainId } = useAccount();
@@ -71,8 +72,11 @@ const Pay: React.FC = () => {
     useWaitForTransactionReceipt({ hash: approveHash });
 
   const { writeContract: payWrite, data: payHash } = useWriteContract();
-  const { isLoading: isPaying, isSuccess: isPaid } =
-    useWaitForTransactionReceipt({ hash: payHash });
+  const {
+    isLoading: isPaying,
+    isSuccess: isPaid,
+    status: payStatus,
+  } = useWaitForTransactionReceipt({ hash: payHash, enabled: !!payHash });
 
   useEffect(() => {
     if (qrData) {
@@ -106,17 +110,18 @@ const Pay: React.FC = () => {
           invoice.merchant as `0x${string}`,
           BigInt(invoice.amountWei),
           invoice.invoiceId as `0x${string}`, // invoiceId is bytes32
+          BigInt(invoice.expiresAt),
         ],
       });
     }
   }, [isApproved, invoice, payWrite]);
 
   useEffect(() => {
-    if (isPaid) {
+    if (payStatus === "success") {
       setPaymentStatus("success");
       setTxHash(payHash!);
     }
-  }, [isPaid, payHash]);
+  }, [payStatus, payHash]);
 
   const handleScan = (detectedCodes: IDetectedBarcode[]) => {
     const text = detectedCodes[0]?.rawValue;
@@ -130,6 +135,11 @@ const Pay: React.FC = () => {
 
   const handlePay = async () => {
     if (!invoice) return;
+
+    if (Date.now() / 1000 > invoice.expiresAt) {
+      alert("Invoice has expired.");
+      return;
+    }
 
     if (!isConnected) {
       alert("Please connect your wallet first.");
@@ -165,16 +175,8 @@ const Pay: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <h2 className="text-xl font-bold mb-4">Scan QR Code</h2>
-          <div className="border border-gray-700 rounded-lg overflow-hidden mb-4">
+          <div className="w-96 h-96 mx-auto border border-gray-700 rounded-lg overflow-hidden mb-4">
             <Scanner
-              formats={["qr_code"]}
-              constraints={{
-                facingMode: "environment",
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-              }}
-              scanDelay={200}
-              components={{ torch: true, zoom: true, finder: true }}
               onScan={handleScan}
             />
           </div>
@@ -203,6 +205,10 @@ const Pay: React.FC = () => {
               </p>
               <p>
                 <strong>Invoice ID:</strong> {invoice.invoiceId}
+              </p>
+              <p>
+                <strong>Expires At:</strong>{" "}
+                {new Date(invoice.expiresAt * 1000).toLocaleString()}
               </p>
             </div>
 

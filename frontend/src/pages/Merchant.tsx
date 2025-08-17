@@ -24,6 +24,7 @@ const Merchant: React.FC = () => {
   const [merchantAddress, setMerchantAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [expiresIn, setExpiresIn] = useState(3600); // Default to 1 hour
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [eip681Uri, setEip681Uri] = useState("");
 
@@ -41,6 +42,8 @@ const Merchant: React.FC = () => {
 
     const amountWei = parseUnits(amount, 6).toString();
     const newInvoiceId = uuidv4();
+    const expiresAt = Math.floor(Date.now() / 1000) + expiresIn;
+
     const newInvoice: Invoice = {
       version: "pyusd-invoice-1",
       chainId: 11155111, // Sepolia
@@ -50,7 +53,7 @@ const Merchant: React.FC = () => {
       amountWei: amountWei,
       invoiceId: newInvoiceId,
       note: note,
-      expiresAt: 0,
+      expiresAt: expiresAt,
     };
 
     setInvoice(newInvoice);
@@ -128,6 +131,21 @@ const Merchant: React.FC = () => {
               className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          <div className="mb-4">
+            <label
+              htmlFor="expiresIn"
+              className="block text-sm font-medium mb-1"
+            >
+              Expires In (seconds)
+            </label>
+            <input
+              type="number"
+              id="expiresIn"
+              value={expiresIn}
+              onChange={(e) => setExpiresIn(parseInt(e.target.value))}
+              className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
           <button
             onClick={generateInvoice}
             className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
@@ -154,6 +172,10 @@ const Merchant: React.FC = () => {
               </p>
               <p>
                 <strong>Invoice ID:</strong> {invoice.invoiceId}
+              </p>
+              <p>
+                <strong>Expires At:</strong>{" "}
+                {new Date(invoice.expiresAt * 1000).toLocaleString()}
               </p>
             </div>
             <div className="mt-4 flex space-x-2">

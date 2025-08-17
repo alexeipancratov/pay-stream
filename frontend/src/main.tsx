@@ -10,6 +10,8 @@ import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
 
+import { BrowserRouter as Router } from "react-router-dom";
+
 const config = createConfig({
   chains: [mainnet, sepolia],
   transports: {
@@ -31,7 +33,9 @@ createRoot(document.getElementById("root")!).render(
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
           <DynamicWagmiConnector>
-            <App />
+            <Router>
+              <App />
+            </Router>
           </DynamicWagmiConnector>
         </QueryClientProvider>
       </WagmiProvider>
