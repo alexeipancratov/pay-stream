@@ -73,7 +73,7 @@ const Pay: React.FC = () => {
 
   const { writeContract: payWrite, data: payHash } = useWriteContract();
   const { isLoading: isPaying, status: payStatus } =
-    useWaitForTransactionReceipt({ hash: payHash, enabled: !!payHash });
+    useWaitForTransactionReceipt({ hash: payHash });
 
   useEffect(() => {
     if (qrData) {
