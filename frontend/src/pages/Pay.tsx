@@ -69,8 +69,9 @@ const Pay: React.FC = () => {
   >("idle");
 
   const { writeContract: approveWrite, data: approveHash } = useWriteContract();
-  const { isLoading: isApproving } =
-    useWaitForTransactionReceipt({ hash: approveHash });
+  const { isLoading: isApproving } = useWaitForTransactionReceipt({
+    hash: approveHash,
+  });
 
   const { writeContract: payWrite, data: payHash } = useWriteContract();
   const { isLoading: isPaying, status: payStatus } =
@@ -78,20 +79,64 @@ const Pay: React.FC = () => {
 
   useEffect(() => {
     if (qrData) {
-      try {
-        const parsed = JSON.parse(qrData);
-        if (
-          parsed.version === "pyusd-invoice-1" &&
-          isAddress(parsed.merchant) &&
-          parsed.amountWei
-        ) {
-          setInvoice(parsed);
-          setParsedError(null);
-        } else {
-          setParsedError("Invalid invoice JSON.");
+      // Reset previous state
+      setInvoice(null);
+      setParsedError(null);
+
+      // Try parsing as EIP-681 URI first
+      if (qrData.startsWith("ethereum:")) {
+        try {
+          const url = new URL(qrData);
+          const recipient = url.pathname.split('/')[0];
+          const params = url.searchParams;
+
+          const tokenAddress = "0x6c3ea9036406852006290770BEdFcAbA0e23A0e8"; // Sepolia PYUSD
+          const merchant = params.get("address");
+          const amountWei = params.get("uint256");
+          const chainId = parseInt(params.get("chain_id") || "1", 10);
+
+          if (
+            isAddress(recipient) && // Simplified check: recipient should be token address
+            merchant &&
+            isAddress(merchant) &&
+            amountWei &&
+            chainId === sepolia.id
+          ) {
+            const amount = (parseInt(amountWei) / 1e6).toFixed(2); // PYUSD has 6 decimals
+            setInvoice({
+              version: "eip-681-parsed",
+              chainId,
+              token: tokenAddress,
+              merchant,
+              amount,
+              amountWei,
+              invoiceId: `eip681-${Date.now()}`, // Generate a temporary ID
+              note: "N/A",
+              expiresAt: 0, // EIP-681 doesn't support expiry
+            });
+          } else {
+            setParsedError("Invalid EIP-681 URI parameters.");
+          }
+        } catch (error) {
+          console.error("EIP-681 parsing error:", error);
+          setParsedError("Failed to parse EIP-681 URI.");
         }
-      } catch {
-        setParsedError("Invalid JSON or EIP-681 URI.");
+      } else {
+        // Fallback to JSON parsing
+        try {
+          const parsed = JSON.parse(qrData);
+          if (
+            parsed.version === "pyusd-invoice-1" &&
+            isAddress(parsed.merchant) &&
+            parsed.amountWei
+          ) {
+            setInvoice(parsed);
+          } else {
+            setParsedError("Invalid invoice JSON.");
+          }
+        } catch {
+          setParsedError("Input is not a valid invoice JSON or EIP-681 URI.");
+        }
       }
     }
   }, [qrData]);
