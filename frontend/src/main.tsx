@@ -26,7 +26,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <DynamicContextProvider
       settings={{
-        environmentId: "1872b4cc-572c-4d33-841c-0776d8dd0dfb", // Replace with your Dynamic Environment ID
+        environmentId: import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID,
         walletConnectors: [EthereumWalletConnectors],
       }}
     >
