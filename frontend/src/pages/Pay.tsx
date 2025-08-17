@@ -69,12 +69,12 @@ const Pay: React.FC = () => {
   >("idle");
 
   const { writeContract: approveWrite, data: approveHash } = useWriteContract();
-  const { isLoading: isApproving, isSuccess: isApproved } =
+  const { isLoading: isApproving } =
     useWaitForTransactionReceipt({ hash: approveHash });
 
   const { writeContract: payWrite, data: payHash } = useWriteContract();
   const { isLoading: isPaying, status: payStatus } =
-    useWaitForTransactionReceipt({ hash: payHash });
+    useWaitForTransactionReceipt({ hash: payHash, enabled: !!payHash });
 
   useEffect(() => {
     if (qrData) {
@@ -97,27 +97,11 @@ const Pay: React.FC = () => {
   }, [qrData]);
 
   useEffect(() => {
-    if (isApproved && invoice) {
-      setPaymentStatus("paying");
-      payWrite({
-        address: PaymentRouterAddress,
-        abi: paymentRouterAbi,
-        functionName: "pay",
-        args: [
-          invoice.token as `0x${string}`,
-          invoice.merchant as `0x${string}`,
-          BigInt(invoice.amountWei),
-          invoice.invoiceId as `0x${string}`, // invoiceId is bytes32
-          BigInt(invoice.expiresAt),
-        ],
-      });
-    }
-  }, [isApproved, invoice, payWrite]);
-
-  useEffect(() => {
     if (payStatus === "success") {
       setPaymentStatus("success");
       setTxHash(payHash!);
+    } else if (payStatus === "error") {
+      setPaymentStatus("error");
     }
   }, [payStatus, payHash]);
 
@@ -151,12 +135,43 @@ const Pay: React.FC = () => {
     }
 
     setPaymentStatus("approving");
-    approveWrite({
-      address: invoice.token as `0x${string}`,
-      abi: pyusdAbi,
-      functionName: "approve",
-      args: [PaymentRouterAddress, BigInt(invoice.amountWei)],
-    });
+    approveWrite(
+      {
+        address: invoice.token as `0x${string}`,
+        abi: pyusdAbi,
+        functionName: "approve",
+        args: [PaymentRouterAddress, BigInt(invoice.amountWei)],
+      },
+      {
+        onSuccess: () => {
+          setPaymentStatus("paying");
+          payWrite(
+            {
+              address: PaymentRouterAddress,
+              abi: paymentRouterAbi,
+              functionName: "pay",
+              args: [
+                invoice.token as `0x${string}`,
+                invoice.merchant as `0x${string}`,
+                BigInt(invoice.amountWei),
+                invoice.invoiceId as `0x${string}`,
+                BigInt(invoice.expiresAt),
+              ],
+            },
+            {
+              onError: (error) => {
+                console.error("Payment failed", error);
+                setPaymentStatus("error");
+              },
+            }
+          );
+        },
+        onError: (error) => {
+          console.error("Approval failed", error);
+          setPaymentStatus("error");
+        },
+      }
+    );
   };
 
   const explorerLink = txHash

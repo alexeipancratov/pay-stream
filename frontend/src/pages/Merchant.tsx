@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
-import { v4 as uuidv4 } from "uuid";
-import { parseUnits } from "viem";
+import { parseUnits, keccak256, toHex, fromHex } from "viem";
 import { QRCodeSVG } from "qrcode.react";
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import pyusdLogo from "../assets/paypal-usd-pyusd-logo.png";
@@ -42,7 +41,7 @@ const Merchant: React.FC = () => {
     }
 
     const amountWei = parseUnits(amount, 6).toString();
-    const newInvoiceId = uuidv4();
+    const newInvoiceId = keccak256(toHex(Date.now()));
     const expiresAt = Math.floor(Date.now() / 1000) + expiresIn;
 
     const newInvoice: Invoice = {

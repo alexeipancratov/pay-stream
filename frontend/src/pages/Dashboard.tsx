@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useAccount, usePublicClient } from "wagmi";
-import { formatUnits } from "viem";
+import { useAccount } from "wagmi";
+import { formatUnits, createPublicClient, http } from "viem";
+import { sepolia } from "wagmi/chains";
 
 const PAYMENT_ROUTER_ADDRESS = "0xBEdA19E852341961789eF4d684098f80f155dCc7"; // Sepolia address
 
@@ -60,29 +61,32 @@ export const PaymentRouterABI = [
   },
 ] as const;
 
+const publicClient = createPublicClient({
+  chain: sepolia,
+  transport: http(),
+});
+
 const Dashboard: React.FC = () => {
   const { address: connectedAddress, isConnected } = useAccount();
   const [payments, setPayments] = useState<PaymentReceivedEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const publicClient = usePublicClient();
-
   useEffect(() => {
     const fetchHistoricalEvents = async () => {
-      if (!publicClient || !isConnected || !connectedAddress) {
+      if (!isConnected || !connectedAddress) {
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
+        const latestBlock = await publicClient.getBlockNumber();
+        const fromBlock = latestBlock > 10000n ? latestBlock - 9999n : 0n;
+
         const logs = await publicClient.getLogs({
           address: PAYMENT_ROUTER_ADDRESS,
           event: PaymentRouterABI[0],
-          args: {
-            merchant: connectedAddress,
-          },
-          fromBlock: 0n,
+          fromBlock: fromBlock,
           toBlock: "latest",
         });
 
@@ -100,7 +104,7 @@ const Dashboard: React.FC = () => {
     };
 
     fetchHistoricalEvents();
-  }, [publicClient, isConnected, connectedAddress]);
+  }, [isConnected, connectedAddress]);
 
   if (!isConnected) {
     return (
