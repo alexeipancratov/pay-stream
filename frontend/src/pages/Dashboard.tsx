@@ -124,7 +124,9 @@ const Dashboard: React.FC = () => {
         </span>
       </p>
 
-      {payments.length === 0 ? (
+      {loading ? (
+        <p className="text-lg text-gray-700">Loading payments...</p>
+      ) : payments.length === 0 ? (
         <p className="text-lg text-gray-700">
           No payments received yet for this merchant.
         </p>

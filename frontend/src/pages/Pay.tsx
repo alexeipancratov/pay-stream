@@ -72,11 +72,8 @@ const Pay: React.FC = () => {
     useWaitForTransactionReceipt({ hash: approveHash });
 
   const { writeContract: payWrite, data: payHash } = useWriteContract();
-  const {
-    isLoading: isPaying,
-    isSuccess: isPaid,
-    status: payStatus,
-  } = useWaitForTransactionReceipt({ hash: payHash, enabled: !!payHash });
+  const { isLoading: isPaying, status: payStatus } =
+    useWaitForTransactionReceipt({ hash: payHash, enabled: !!payHash });
 
   useEffect(() => {
     if (qrData) {
@@ -178,6 +175,7 @@ const Pay: React.FC = () => {
           <div className="w-96 h-96 mx-auto border border-gray-700 rounded-lg overflow-hidden mb-4">
             <Scanner
               onScan={handleScan}
+              onError={(error) => console.error("Scanner Error:", error)}
             />
           </div>
           <h2 className="text-xl font-bold mb-4">Or Paste Invoice</h2>
