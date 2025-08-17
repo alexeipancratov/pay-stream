@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { parseUnits } from "viem";
 import { QRCodeSVG } from "qrcode.react";
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import pyusdLogo from "../assets/paypal-usd-pyusd-logo.png";
 
 interface Invoice {
   version: string;
@@ -194,6 +195,10 @@ const Merchant: React.FC = () => {
             </div>
           </div>
         )}
+      </div>
+      <div className="flex justify-center items-center mt-8">
+        <span className="text-gray-500 mr-2">Powered by</span>
+        <img src={pyusdLogo} alt="PYUSD Logo" className="h-8" />
       </div>
     </div>
   );

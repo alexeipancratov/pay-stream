@@ -9,6 +9,7 @@ import { isAddress } from "viem";
 import { Scanner, type IDetectedBarcode } from "@yudiel/react-qr-scanner";
 import { sepolia } from "wagmi/chains";
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
+import pyusdLogo from "../assets/paypal-usd-pyusd-logo.png";
 
 // ABI for PYUSD (simplified for approve)
 const pyusdAbi = [
@@ -264,6 +265,10 @@ const Pay: React.FC = () => {
             )}
           </div>
         )}
+      </div>
+      <div className="flex justify-center items-center mt-8">
+        <span className="text-gray-500 mr-2">Powered by</span>
+        <img src={pyusdLogo} alt="PYUSD Logo" className="h-8" />
       </div>
     </div>
   );
