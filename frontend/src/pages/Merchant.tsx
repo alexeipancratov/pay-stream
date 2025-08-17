@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useAccount, useDisconnect } from "wagmi";
+import { useAccount } from "wagmi";
 import { v4 as uuidv4 } from "uuid";
 import { parseUnits } from "viem";
 import { QRCodeSVG } from "qrcode.react";
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 
 interface Invoice {
   version: string;
@@ -19,7 +19,6 @@ interface Invoice {
 
 const Merchant: React.FC = () => {
   const { address, isConnected } = useAccount();
-  const { disconnect } = useDisconnect();
   const { setShowAuthFlow } = useDynamicContext(); // ← open Dynamic modal
 
   const [merchantAddress, setMerchantAddress] = useState("");
@@ -85,12 +84,7 @@ const Merchant: React.FC = () => {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Merchant Invoice Generator</h1>
-        <button
-          onClick={() => disconnect()}
-          className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Disconnect
-        </button>
+        <DynamicWidget />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
